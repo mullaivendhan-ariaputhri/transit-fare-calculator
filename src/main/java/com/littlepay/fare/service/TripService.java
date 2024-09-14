@@ -1,15 +1,12 @@
 package com.littlepay.fare.service;
 
+import static com.littlepay.fare.constants.Constants.*;
+import static java.util.Objects.isNull;
+
 import com.littlepay.fare.config.AppConfig;
 import com.littlepay.fare.dto.TapRecord;
 import com.littlepay.fare.dto.TripRecord;
 import com.littlepay.fare.manager.TripFareManager;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -21,9 +18,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.littlepay.fare.constants.Constants.*;
-import static java.util.Objects.isNull;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -77,8 +76,9 @@ public class TripService {
           TripRecord trip = createTripRecord(tapOn, tapRecord);
           trips.add(trip);
         } else {
-          // Assumption : Impossible unless an error in system
-          log.error("Tap Off record found without a Tap On, Invalid Record = {}", tapRecord);
+          // Assumption : Impossible unless an error in system/missing record
+          log.error(
+              "Tap Off record found without a Tap On, Invalid/Missing Record = {}", tapRecord);
         }
       }
     }

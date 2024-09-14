@@ -25,9 +25,9 @@ public class Constants {
   // Trip Params
   public static final String TAP_ON = "ON";
   public static final String TAP_OFF = "OFF";
-  public static final String COMPLETED = "Completed";
-  public static final String INCOMPLETE = "Incomplete";
-  public static final String CANCELLED = "Cancelled";
+  public static final String COMPLETED = "COMPLETED";
+  public static final String INCOMPLETE = "INCOMPLETE";
+  public static final String CANCELLED = "CANCELLED";
 
   private Constants() {
     // Private constructor to prevent instantiation

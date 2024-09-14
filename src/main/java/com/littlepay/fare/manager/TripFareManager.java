@@ -1,13 +1,12 @@
 package com.littlepay.fare.manager;
 
-import com.littlepay.fare.config.FareConfig;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import static com.littlepay.fare.constants.Constants.HYPHEN_SEPARATOR;
 
+import com.littlepay.fare.config.FareConfig;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.littlepay.fare.constants.Constants.HYPHEN_SEPARATOR;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
