@@ -16,7 +16,6 @@ import lombok.NoArgsConstructor;
 @Data
 @JsonPropertyOrder({"ID", "DateTimeUTC", "TapType", "StopId", "CompanyId", "BusID", "PAN"})
 public class TapRecord {
-  private static final long serialVersionUID = 914710533044383617L;
 
   @JsonProperty("ID")
   private Integer id;

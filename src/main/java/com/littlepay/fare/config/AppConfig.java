@@ -7,13 +7,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 @Getter
-@Configuration
 @Slf4j
+@Configuration
 public class AppConfig {
   @Value("${date.format}")
   private String dateFormat;
 
-  @Value("${timezone}")
+  @Value("${date.timezone}")
   private String timeZone;
 
   @Value("${taps.file.path}")

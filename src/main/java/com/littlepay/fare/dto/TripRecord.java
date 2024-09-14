@@ -5,7 +5,6 @@ import static com.littlepay.fare.constants.Constants.TRIP_RECORD;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import java.io.Serializable;
 import java.time.OffsetDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,8 +28,7 @@ import lombok.NoArgsConstructor;
   "PAN",
   "Status"
 })
-public class TripRecord implements Serializable {
-  private static final long serialVersionUID = 668708283156493876L;
+public class TripRecord {
 
   @JsonProperty("Started")
   private OffsetDateTime started;

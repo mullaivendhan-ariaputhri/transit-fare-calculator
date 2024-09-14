@@ -1,13 +1,9 @@
 package com.littlepay.fare.service;
 
+import static com.littlepay.fare.constants.Constants.*;
+
 import com.littlepay.fare.config.AppConfig;
 import com.littlepay.fare.dto.TapRecord;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -16,8 +12,11 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.littlepay.fare.constants.Constants.*;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -26,16 +25,17 @@ public class TapService {
   @Autowired AppConfig appConfig;
 
   /**
-   * Write Trips as csv from the list of Trip Records
-   * @return
+   * Loading Tap details
+   *
+   * @return List of taps
    */
   public List<TapRecord> getTapRecords() {
-    log.debug("Reading Tap records based on configuration");
+    log.debug("Reading Tap records based on file configuration");
     final DateTimeFormatter dateFormat =
-        DateTimeFormatter.ofPattern(appConfig.getDateFormat());
+        DateTimeFormatter.ofPattern(appConfig.getDateFormat()).withZone(ZoneOffset.UTC);
     log.info("Date format to parse tap records - {}", appConfig.getDateFormat());
 
-    List<TapRecord> records = new ArrayList<>();
+    List<TapRecord> taps = new ArrayList<>();
     try (Reader reader = new FileReader(appConfig.getTapsFilePath());
         CSVParser csvParser =
             new CSVParser(
@@ -48,13 +48,11 @@ public class TapService {
       csvParser.stream()
           .forEach(
               csvRecord ->
-                  records.add(
+                  taps.add(
                       TapRecord.builder()
                           .id(Integer.parseInt(csvRecord.get(ID)))
                           .dateTimeUTC(
-                              OffsetDateTime.parse(
-                                  csvRecord.get(DATE_TIME_UTC),
-                                      dateFormat.withZone(ZoneOffset.UTC)))
+                              OffsetDateTime.parse(csvRecord.get(DATE_TIME_UTC), dateFormat))
                           .tapType(csvRecord.get(TAP_TYPE))
                           .stopId(csvRecord.get(STOP_ID))
                           .companyId(csvRecord.get(COMPANY_ID))
@@ -66,7 +64,10 @@ public class TapService {
           "Exception occurred in reading CSV file - {} with message - {}",
           appConfig.getTapsFilePath(),
           e.getMessage());
+    } finally {
+      log.info("Successfully loaded Taps info. # - {}", taps.size());
     }
-    return records;
+
+    return taps;
   }
 }
