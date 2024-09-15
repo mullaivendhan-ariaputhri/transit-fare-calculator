@@ -26,9 +26,9 @@ public class TripFareManager {
   /**
    * Get fare between 2 stops
    *
-   * @param fromStop
-   * @param toStop
-   * @return
+   * @param fromStop From Stop
+   * @param toStop To Stop
+   * @return Fare between 2 stops
    */
   public double getFare(String fromStop, String toStop) {
     return fareMap.getOrDefault(getRoute(fromStop, toStop), 0.0);
@@ -37,8 +37,8 @@ public class TripFareManager {
   /**
    * Get maximum fare if end stop is unknown
    *
-   * @param fromStop
-   * @return
+   * @param fromStop From Stop
+   * @return Max fare from stop
    */
   public double getMaxFare(String fromStop) {
     return fareMap.keySet().stream()

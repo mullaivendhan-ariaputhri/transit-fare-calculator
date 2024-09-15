@@ -36,8 +36,8 @@ public class TripService {
    * Generate Trips from Taps. Process taps in Groups of PAN and Bus ID. Invoke processGroupedTaps
    * for each group to convert taps to Trips
    *
-   * @param taps
-   * @return
+   * @param taps List<TapRecord>
+   * @return List<TripRecord>
    */
   public List<TripRecord> generateTripsFromTaps(List<TapRecord> taps) {
     return taps.stream()
@@ -52,8 +52,8 @@ public class TripService {
    * Process grouped trips Sort the taps in the order of time, and create trips by evaluating a
    * start/end trip availability
    *
-   * @param tapRecords
-   * @return
+   * @param tapRecords List<TapRecord>
+   * @return Stream<TripRecord>
    */
   private Stream<TripRecord> processGroupedTaps(List<TapRecord> tapRecords) {
     List<TapRecord> sortedTaps =
@@ -102,9 +102,9 @@ public class TripService {
   /**
    * Create Trips from Taps - Completed or Cancelled Trip
    *
-   * @param trip
-   * @param tapOn
-   * @param tapOff
+   * @param trip TripRecord-Full Trip
+   * @param tapOn TapRecord-On
+   * @param tapOff TapRecord-Off
    */
   private void setupCompletedOrCancelledTrip(TripRecord trip, TapRecord tapOn, TapRecord tapOff) {
     trip.setStarted(tapOn.getDateTimeUTC());
@@ -127,8 +127,8 @@ public class TripService {
   /**
    * Create Trips from Taps - Incomplete Trip
    *
-   * @param trip
-   * @param tapOn
+   * @param trip - Trip
+   * @param tapOn - TapRecord-On
    */
   private void setupIncompleteTrip(TripRecord trip, TapRecord tapOn) {
     trip.setStarted(tapOn.getDateTimeUTC());
@@ -143,8 +143,8 @@ public class TripService {
   /**
    * Create Trips from Taps - Invalid Trip
    *
-   * @param trip
-   * @param tapOff
+   * @param trip Trip
+   * @param tapOff - TapRecord-Off
    */
   private void setupInvalidTrip(TripRecord trip, TapRecord tapOff) {
     trip.setFinished(tapOff.getDateTimeUTC());
@@ -155,7 +155,13 @@ public class TripService {
     trip.setStatus(INVALID);
   }
 
-  /** Read taps csv and create a list of Tap Records */
+  /**
+   * Read taps csv and create a list of Tap Records
+   *
+   * @param trips Final trip details
+   * @return file write status
+   * @throws FareCalculatorException Failure reason
+   */
   public boolean writeTrips(List<TripRecord> trips) throws FareCalculatorException {
     boolean success = false;
     log.debug("Writing Trip records post processing. # of trips - {}", trips.size());

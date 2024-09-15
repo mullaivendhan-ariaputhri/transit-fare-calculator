@@ -34,7 +34,7 @@ class TapServiceTest {
   }
 
   @Test
-  void testGetTapRecordsSuccess() throws FareCalculatorException {
+  void testGetTapRecordsSuccess() {
     when(appConfig.getDateFormat()).thenReturn("dd-MM-yyyy HH:mm:ss");
     when(appConfig.getTapsFilePath()).thenReturn("src/test/resources/taps.csv");
     when(appConfig.getTapsHeaders())
@@ -57,8 +57,8 @@ class TapServiceTest {
       assertEquals("Company1", firstTap.getCompanyId());
       assertEquals("Bus37", firstTap.getBusId());
       assertEquals("5500005555555559", firstTap.getPan());
-    } catch (Exception e) {
-      fail("Exception should not have occurred");
+    } catch (FareCalculatorException e) {
+      fail("Exception should not have occurred since file exists");
     }
   }
 
@@ -78,7 +78,7 @@ class TapServiceTest {
   }
 
   @Test
-  void testGetTapRecordsEmptyFile() throws FareCalculatorException {
+  void testGetTapRecordsEmptyFile() {
     // Given
     when(appConfig.getDateFormat()).thenReturn("dd-MM-yyyy HH:mm:ss");
     when(appConfig.getTapsFilePath()).thenReturn("src/test/resources/empty-file.csv");
@@ -96,7 +96,7 @@ class TapServiceTest {
   }
 
   @Test
-  void testGetTapRecordsMissingColumns() throws FareCalculatorException {
+  void testGetTapRecordsMissingColumns() {
     // Given
     when(appConfig.getDateFormat()).thenReturn("dd-MM-yyyy HH:mm:ss");
     when(appConfig.getTapsFilePath()).thenReturn("src/test/resources/missing-columns.csv");
