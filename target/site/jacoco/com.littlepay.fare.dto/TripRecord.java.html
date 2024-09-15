@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TripRecord.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">transit-fare-calculator</a> &gt; <a href="index.source.html" class="el_package">com.littlepay.fare.dto</a> &gt; <span class="el_source">TripRecord.java</span></div><h1>TripRecord.java</h1><pre class="source lang-java linenums">package com.littlepay.fare.dto;
+
+import static com.littlepay.fare.constants.Constants.TRIP_RECORD;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import java.time.OffsetDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({
+  &quot;Started&quot;,
+  &quot;Finished&quot;,
+  &quot;DurationSecs&quot;,
+  &quot;FromStopId&quot;,
+  &quot;ToStopId&quot;,
+  &quot;ChargeAmount&quot;,
+  &quot;CompanyId&quot;,
+  &quot;BusID&quot;,
+  &quot;PAN&quot;,
+  &quot;Status&quot;
+})
+public class TripRecord {
+
+  @JsonProperty(&quot;Started&quot;)
+  private OffsetDateTime started;
+
+  @JsonProperty(&quot;Finished&quot;)
+  private OffsetDateTime finished;
+
+  @JsonProperty(&quot;DurationSecs&quot;)
+  private Integer durationSecs;
+
+  @JsonProperty(&quot;FromStopId&quot;)
+  private String fromStopId;
+
+  @JsonProperty(&quot;ToStopId&quot;)
+  private String toStopId;
+
+  @JsonProperty(&quot;ChargeAmount&quot;)
+  private Double chargeAmount;
+
+  @JsonProperty(&quot;CompanyId&quot;)
+  private String companyId;
+
+  @JsonProperty(&quot;BusID&quot;)
+  private String busID;
+
+  @JsonProperty(&quot;PAN&quot;)
+  private String pan;
+
+  @JsonProperty(&quot;Status&quot;)
+  private String status;
+
+  @Override
+  public String toString() {
+<span class="fc" id="L65">    return String.format(</span>
+        TRIP_RECORD,
+        started,
+        finished,
+        durationSecs,
+        fromStopId,
+        toStopId,
+        chargeAmount,
+        companyId,
+        busID,
+        pan,
+        status);
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -24,6 +24,12 @@ hs_err_pid*
 replay_pid*
 
 # IntelliJ files
-target/
+target/*
 .idea/
 *.iml
+
+# Override
+!target/site/
+!target/site/**
+!target/trips.csv
+!target/transit-fare-calculator.jar

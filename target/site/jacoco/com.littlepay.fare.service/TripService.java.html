@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TripService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">transit-fare-calculator</a> &gt; <a href="index.source.html" class="el_package">com.littlepay.fare.service</a> &gt; <span class="el_source">TripService.java</span></div><h1>TripService.java</h1><pre class="source lang-java linenums">package com.littlepay.fare.service;
+
+import static com.littlepay.fare.constants.Constants.*;
+
+import com.littlepay.fare.config.AppConfig;
+import com.littlepay.fare.dto.TapRecord;
+import com.littlepay.fare.dto.TripRecord;
+import com.littlepay.fare.exception.FareCalculatorException;
+import com.littlepay.fare.manager.TripFareManager;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+<span class="fc" id="L27">@Slf4j</span>
+@Service
+<span class="fc" id="L29">public class TripService {</span>
+
+  @Autowired AppConfig appConfig;
+
+  @Autowired private TripFareManager tripFareManager;
+
+  /**
+   * Generate Trips from Taps. Process taps in Groups of PAN and Bus ID. Invoke processGroupedTaps
+   * for each group to convert taps to Trips
+   *
+   * @param taps List&lt;TapRecord&gt;
+   * @return List&lt;TripRecord&gt;
+   */
+  public List&lt;TripRecord&gt; generateTripsFromTaps(List&lt;TapRecord&gt; taps) {
+<span class="fc" id="L43">    return taps.stream()</span>
+<span class="fc" id="L44">        .collect(Collectors.groupingBy(t -&gt; Arrays.asList(t.getPan(), t.getBusId())))</span>
+<span class="fc" id="L45">        .values()</span>
+<span class="fc" id="L46">        .stream()</span>
+<span class="fc" id="L47">        .flatMap(this::processGroupedTaps)</span>
+<span class="fc" id="L48">        .collect(Collectors.toList());</span>
+  }
+
+  /**
+   * Process grouped trips Sort the taps in the order of time, and create trips by evaluating a
+   * start/end trip availability
+   *
+   * @param tapRecords List&lt;TapRecord&gt;
+   * @return Stream&lt;TripRecord&gt;
+   */
+  private Stream&lt;TripRecord&gt; processGroupedTaps(List&lt;TapRecord&gt; tapRecords) {
+<span class="fc" id="L59">    List&lt;TapRecord&gt; sortedTaps =</span>
+<span class="fc" id="L60">        tapRecords.stream()</span>
+<span class="fc" id="L61">            .sorted(Comparator.comparing(TapRecord::getDateTimeUTC))</span>
+<span class="fc" id="L62">            .collect(Collectors.toList());</span>
+    // Trips generated from grouped taps
+<span class="fc" id="L64">    List&lt;TripRecord&gt; trips = new ArrayList&lt;&gt;();</span>
+
+    // Stack to store TAP_ON details until TAP_OFF is found to process.
+<span class="fc" id="L67">    Stack&lt;TapRecord&gt; tapOnStack = new Stack&lt;&gt;();</span>
+
+    // Iterate sorted taps and generate Trip
+<span class="fc bfc" id="L70" title="All 2 branches covered.">    for (TapRecord tapRecord : sortedTaps) {</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">      if (TAP_ON.equals(tapRecord.getTapType())) {</span>
+<span class="fc" id="L72">        tapOnStack.push(tapRecord);</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">      } else if (TAP_OFF.equals(tapRecord.getTapType())) {</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        if (!tapOnStack.isEmpty()) {</span>
+          // TapOn and TapOff present (Completed or Cancelled)
+<span class="fc" id="L76">          TapRecord tapOn = tapOnStack.pop();</span>
+<span class="fc" id="L77">          TripRecord trip = new TripRecord();</span>
+<span class="fc" id="L78">          setupCompletedOrCancelledTrip(trip, tapOn, tapRecord);</span>
+<span class="fc" id="L79">          trips.add(trip);</span>
+<span class="fc" id="L80">        } else {</span>
+          // Assumption : Impossible unless an error in system/missing record
+          // TapOff present, TapOn absent (Invalid)
+<span class="fc" id="L83">          TripRecord trip = new TripRecord();</span>
+<span class="fc" id="L84">          setupInvalidTrip(trip, tapRecord);</span>
+<span class="fc" id="L85">          trips.add(trip);</span>
+<span class="fc" id="L86">          log.error(</span>
+              &quot;Tap Off record found without a Tap On, Invalid/Missing Record = {}&quot;, tapRecord);
+        }
+      }
+<span class="fc" id="L90">    }</span>
+
+    // TapOn present, TapOff absent (Incomplete)
+<span class="fc bfc" id="L93" title="All 2 branches covered.">    while (!tapOnStack.isEmpty()) {</span>
+<span class="fc" id="L94">      TripRecord trip = new TripRecord();</span>
+<span class="fc" id="L95">      setupIncompleteTrip(trip, tapOnStack.pop());</span>
+<span class="fc" id="L96">      trips.add(trip);</span>
+<span class="fc" id="L97">    }</span>
+
+<span class="fc" id="L99">    return trips.stream();</span>
+  }
+
+  /**
+   * Create Trips from Taps - Completed or Cancelled Trip
+   *
+   * @param trip TripRecord-Full Trip
+   * @param tapOn TapRecord-On
+   * @param tapOff TapRecord-Off
+   */
+  private void setupCompletedOrCancelledTrip(TripRecord trip, TapRecord tapOn, TapRecord tapOff) {
+<span class="fc" id="L110">    trip.setStarted(tapOn.getDateTimeUTC());</span>
+<span class="fc" id="L111">    trip.setFinished(tapOff.getDateTimeUTC());</span>
+<span class="fc" id="L112">    trip.setDurationSecs(</span>
+<span class="fc" id="L113">        (int) (tapOff.getDateTimeUTC().toEpochSecond() - tapOn.getDateTimeUTC().toEpochSecond()));</span>
+<span class="fc" id="L114">    trip.setFromStopId(tapOn.getStopId());</span>
+<span class="fc" id="L115">    trip.setToStopId(tapOff.getStopId());</span>
+<span class="fc" id="L116">    trip.setChargeAmount(tripFareManager.getFare(tapOn.getStopId(), tapOff.getStopId()));</span>
+<span class="fc" id="L117">    trip.setCompanyId(tapOn.getCompanyId());</span>
+<span class="fc" id="L118">    trip.setBusID(tapOn.getBusId());</span>
+<span class="fc" id="L119">    trip.setPan(tapOn.getPan());</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">    if (tapOn.getStopId().equalsIgnoreCase(tapOff.getStopId())) {</span>
+<span class="fc" id="L121">      trip.setStatus(CANCELLED);</span>
+    } else {
+<span class="fc" id="L123">      trip.setStatus(COMPLETED);</span>
+    }
+<span class="fc" id="L125">  }</span>
+
+  /**
+   * Create Trips from Taps - Incomplete Trip
+   *
+   * @param trip - Trip
+   * @param tapOn - TapRecord-On
+   */
+  private void setupIncompleteTrip(TripRecord trip, TapRecord tapOn) {
+<span class="fc" id="L134">    trip.setStarted(tapOn.getDateTimeUTC());</span>
+<span class="fc" id="L135">    trip.setFromStopId(tapOn.getStopId());</span>
+<span class="fc" id="L136">    trip.setChargeAmount(tripFareManager.getMaxFare(tapOn.getStopId()));</span>
+<span class="fc" id="L137">    trip.setCompanyId(tapOn.getCompanyId());</span>
+<span class="fc" id="L138">    trip.setBusID(tapOn.getBusId());</span>
+<span class="fc" id="L139">    trip.setPan(tapOn.getPan());</span>
+<span class="fc" id="L140">    trip.setStatus(INCOMPLETE);</span>
+<span class="fc" id="L141">  }</span>
+
+  /**
+   * Create Trips from Taps - Invalid Trip
+   *
+   * @param trip Trip
+   * @param tapOff - TapRecord-Off
+   */
+  private void setupInvalidTrip(TripRecord trip, TapRecord tapOff) {
+<span class="fc" id="L150">    trip.setFinished(tapOff.getDateTimeUTC());</span>
+<span class="fc" id="L151">    trip.setToStopId(tapOff.getStopId());</span>
+<span class="fc" id="L152">    trip.setCompanyId(tapOff.getCompanyId());</span>
+<span class="fc" id="L153">    trip.setBusID(tapOff.getBusId());</span>
+<span class="fc" id="L154">    trip.setPan(tapOff.getPan());</span>
+<span class="fc" id="L155">    trip.setStatus(INVALID);</span>
+<span class="fc" id="L156">  }</span>
+
+  /**
+   * Read taps csv and create a list of Tap Records
+   *
+   * @param trips Final trip details
+   * @return file write status
+   * @throws FareCalculatorException Failure reason
+   */
+  public boolean writeTrips(List&lt;TripRecord&gt; trips) throws FareCalculatorException {
+<span class="fc" id="L166">    boolean success = false;</span>
+<span class="fc" id="L167">    log.debug(&quot;Writing Trip records post processing. # of trips - {}&quot;, trips.size());</span>
+<span class="fc" id="L168">    final DateTimeFormatter dateFormat =</span>
+<span class="fc" id="L169">        DateTimeFormatter.ofPattern(appConfig.getDateFormat()).withZone(ZoneOffset.UTC);</span>
+<span class="fc" id="L170">    log.info(&quot;Date format to write trip records - {}&quot;, appConfig.getDateFormat());</span>
+<span class="fc" id="L171">    Path filePath = Paths.get(appConfig.getTripsFilePath());</span>
+<span class="fc" id="L172">    try (Writer writer = new FileWriter(appConfig.getTripsFilePath());</span>
+<span class="fc" id="L173">        CSVPrinter csvPrinter =</span>
+            new CSVPrinter(
+                writer,
+<span class="fc" id="L176">                CSVFormat.Builder.create().setHeader(appConfig.getTripsHeaders()).build())) {</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">      for (TripRecord trip : trips) {</span>
+<span class="fc" id="L178">        csvPrinter.printRecord(</span>
+<span class="fc" id="L179">            Optional.ofNullable(trip.getStarted()).map(dateFormat::format).orElse(NOT_AVAILABLE),</span>
+<span class="fc" id="L180">            Optional.ofNullable(trip.getFinished()).map(dateFormat::format).orElse(NOT_AVAILABLE),</span>
+<span class="fc" id="L181">            Optional.ofNullable(trip.getDurationSecs())</span>
+<span class="fc" id="L182">                .map(d -&gt; String.format(DURATION_SECS, d))</span>
+<span class="fc" id="L183">                .orElse(NOT_AVAILABLE),</span>
+<span class="fc" id="L184">            Optional.ofNullable(trip.getFromStopId()).orElse(NOT_AVAILABLE),</span>
+<span class="fc" id="L185">            Optional.ofNullable(trip.getToStopId()).orElse(NOT_AVAILABLE),</span>
+<span class="fc" id="L186">            Optional.ofNullable(trip.getChargeAmount())</span>
+<span class="fc" id="L187">                .map(amount -&gt; String.format(CHARGE_AMOUNT, amount))</span>
+<span class="fc" id="L188">                .orElse(NOT_AVAILABLE),</span>
+<span class="fc" id="L189">            Optional.ofNullable(trip.getCompanyId()).orElse(NOT_AVAILABLE),</span>
+<span class="fc" id="L190">            Optional.ofNullable(trip.getBusID()).orElse(NOT_AVAILABLE),</span>
+<span class="fc" id="L191">            Optional.ofNullable(trip.getPan()).orElse(NOT_AVAILABLE),</span>
+<span class="fc" id="L192">            Optional.ofNullable(trip.getStatus()).orElse(NOT_AVAILABLE));</span>
+<span class="fc" id="L193">      }</span>
+<span class="fc" id="L194">      csvPrinter.flush();</span>
+<span class="fc" id="L195">      log.info(&quot;#{} Trips added to file - {}&quot;, appConfig.getTripsFilePath(), trips.size());</span>
+
+      // Check if the file was written successfully
+<span class="pc bpc" id="L198" title="1 of 2 branches missed.">      if (Files.exists(filePath)) {</span>
+<span class="fc" id="L199">        long fileSize = Files.size(filePath);</span>
+<span class="fc" id="L200">        log.info(&quot;File successfully created. File size: {} bytes&quot;, fileSize);</span>
+<span class="pc bpc" id="L201" title="1 of 2 branches missed.">        success = fileSize &gt; 0;</span>
+      }
+<span class="fc" id="L203">    } catch (IOException e) {</span>
+<span class="fc" id="L204">      log.error(</span>
+          &quot;Exception occurred in writing CSV file - {} with message - {}&quot;,
+<span class="fc" id="L206">          appConfig.getTripsFilePath(),</span>
+<span class="fc" id="L207">          e.getMessage());</span>
+<span class="fc" id="L208">      throw new FareCalculatorException(&quot;Exception when writing Trips file&quot;, e);</span>
+<span class="fc" id="L209">    }</span>
+
+<span class="pc bpc" id="L211" title="1 of 2 branches missed.">    if (!success) {</span>
+<span class="nc" id="L212">      log.error(&quot;Trips File not created: {}&quot;, appConfig.getTripsFilePath());</span>
+<span class="nc" id="L213">      throw new FareCalculatorException(&quot;Trips File not created&quot;);</span>
+    }
+<span class="fc" id="L215">    return success;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FareService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">transit-fare-calculator</a> &gt; <a href="index.source.html" class="el_package">com.littlepay.fare.service</a> &gt; <span class="el_source">FareService.java</span></div><h1>FareService.java</h1><pre class="source lang-java linenums">package com.littlepay.fare.service;
+
+import com.littlepay.fare.dto.TapRecord;
+import com.littlepay.fare.dto.TripRecord;
+import com.littlepay.fare.exception.FareCalculatorException;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+<span class="fc" id="L11">@Slf4j</span>
+@Service
+<span class="fc" id="L13">public class FareService {</span>
+
+  @Autowired TapService tapService;
+
+  @Autowired TripService tripService;
+
+  public void tapsToTrips() throws FareCalculatorException {
+    // Load Tap details
+<span class="fc" id="L21">    log.info(&quot;Loading Tap details&quot;);</span>
+<span class="fc" id="L22">    List&lt;TapRecord&gt; taps = tapService.getTapRecords();</span>
+<span class="fc" id="L23">    log.info(&quot;Taps Loaded from file, Count # - {}&quot;, taps.size());</span>
+<span class="fc" id="L24">    log.debug(&quot;Taps - {}&quot;, taps);</span>
+
+    // Generate Trips from Taps
+<span class="fc" id="L27">    log.info(&quot;Generate Trips from Taps&quot;);</span>
+<span class="fc" id="L28">    List&lt;TripRecord&gt; trips = tripService.generateTripsFromTaps(taps);</span>
+<span class="fc" id="L29">    log.info(&quot;Trips generated from Taps, Count # - {}&quot;, trips.size());</span>
+<span class="fc" id="L30">    log.debug(&quot;Trips - {}&quot;, trips);</span>
+
+    // Log Trips
+<span class="fc" id="L33">    log.info(&quot;Write Trips to file&quot;);</span>
+<span class="fc" id="L34">    boolean success = tripService.writeTrips(trips);</span>
+<span class="fc bfc" id="L35" title="All 2 branches covered.">    if (success) {</span>
+<span class="fc" id="L36">      log.info(&quot;Trips logged successfully!&quot;);</span>
+    } else {
+      // Integrate Error management
+<span class="fc" id="L39">      log.error(&quot;Failure in logging trips, please check the logs.&quot;);</span>
+    }
+<span class="fc" id="L41">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
