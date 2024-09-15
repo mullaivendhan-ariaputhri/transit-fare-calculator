@@ -2,6 +2,7 @@
 ***
 ## Prerequisites
 - Java 11 or higher
+- Run the project from the main folder /transit-fare-calculator to ensure that the source resources are accessible.
 ***
 # Using Maven Wrapper
 ## Build and Run
@@ -26,17 +27,6 @@ To run the application:
 ```bash
 java -jar target/transit-fare-calculator.jar
 ```
-***
 
-# References
-#### To add Maven Wrapper to the Project
-```bash
-mvn wrapper:wrapper
-```
-#### To build the application using the Maven Wrapper, run:
-```bash
-./mvnw clean package
-```
-
-#### Repo
+## Repo
 [Github](https://github.com/mullaivendhan-ariaputhri/transit-fare-calculator)
