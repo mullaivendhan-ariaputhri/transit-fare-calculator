@@ -11,7 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 class TripRecordTest {
 
   @Test
-  public void testSettersAndGetters() {
+  void testSettersAndGetters() {
     TripRecord tripRecord = new TripRecord();
     OffsetDateTime now = OffsetDateTime.now();
     tripRecord.setStarted(now);
@@ -38,7 +38,7 @@ class TripRecordTest {
   }
 
   @Test
-  public void testToString() {
+  void testToString() {
     OffsetDateTime now = OffsetDateTime.now();
     TripRecord tripRecord = new TripRecord();
     tripRecord.setStarted(now);
@@ -66,6 +66,6 @@ class TripRecordTest {
             "5500005555555559",
             "COMPLETED");
 
-    Assertions.assertThat(tripRecord.toString()).isEqualTo(expectedString);
+    Assertions.assertThat(tripRecord).hasToString(expectedString);
   }
 }

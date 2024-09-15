@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.littlepay.fare.exception.FareCalculatorException;
 import com.littlepay.fare.service.FareService;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -15,7 +16,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-@ActiveProfiles("default")
+@ActiveProfiles("test")
 class FareCalculatorAppTest {
 
   @MockBean private FareService fareService;
@@ -25,14 +26,14 @@ class FareCalculatorAppTest {
   @Autowired private ApplicationContext applicationContext;
 
   @Test
-  public void testApplicationContextLoads() {
+  void testApplicationContextLoads() {
     // Ensure that the application context loads and the FareCalculatorApp bean is available
-    FareCalculatorApp fareCalculatorApp = applicationContext.getBean(FareCalculatorApp.class);
-    assertNotNull(fareCalculatorApp);
+    FareCalculatorApp fareCalculator = applicationContext.getBean(FareCalculatorApp.class);
+    assertNotNull(fareCalculator);
   }
 
   @Test
-  public void testRunMethodCallsFareService() {
+  void testRunMethodCallsFareService() throws FareCalculatorException {
     // Initialize mocks
     MockitoAnnotations.openMocks(this);
 

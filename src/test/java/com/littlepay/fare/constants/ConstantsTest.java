@@ -10,7 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 class ConstantsTest {
 
   @Test
-  public void testConstant() {
+  void testConstant() {
     assertThat(Constants.INVALID).isEqualTo("INVALID");
     assertThat(Constants.CANCELLED).isEqualTo("CANCELLED");
     assertThat(Constants.INCOMPLETE).isEqualTo("INCOMPLETE");
@@ -18,13 +18,13 @@ class ConstantsTest {
   }
 
   @Test
-  public void testConstantsInstantiation() {
+  void testConstantsInstantiation() {
     // Design check to prevent instantiation
     try {
       Constructor<Constants> constructor = Constants.class.getDeclaredConstructor();
       constructor.newInstance();
     } catch (Exception e) {
-      assertThat(e).isInstanceOf(java.lang.IllegalAccessException.class);
+      assertThat(e).isInstanceOf(IllegalAccessException.class);
     }
   }
 }

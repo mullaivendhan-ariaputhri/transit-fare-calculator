@@ -20,6 +20,10 @@ public class FareCalculatorApp implements CommandLineRunner {
 
   @Override
   public void run(String... args) {
-    fareService.tapsToTrips();
+    try {
+      fareService.tapsToTrips();
+    } catch (Exception e) {
+      log.error("Exception occurred with message {}", e.getMessage());
+    }
   }
 }

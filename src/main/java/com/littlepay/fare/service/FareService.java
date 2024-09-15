@@ -2,6 +2,7 @@ package com.littlepay.fare.service;
 
 import com.littlepay.fare.dto.TapRecord;
 import com.littlepay.fare.dto.TripRecord;
+import com.littlepay.fare.exception.FareCalculatorException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,7 @@ public class FareService {
 
   @Autowired TripService tripService;
 
-  public void tapsToTrips() {
+  public void tapsToTrips() throws FareCalculatorException {
     // Load Tap details
     log.info("Loading Tap details");
     List<TapRecord> taps = tapService.getTapRecords();

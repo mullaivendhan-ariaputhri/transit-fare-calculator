@@ -11,7 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 class TapRecordTest {
 
   @Test
-  public void testSettersAndGetters() {
+  void testSettersAndGetters() {
     TapRecord tapRecord = new TapRecord();
     OffsetDateTime now = OffsetDateTime.now();
     tapRecord.setId(1);
@@ -32,7 +32,7 @@ class TapRecordTest {
   }
 
   @Test
-  public void testToString() {
+  void testToString() {
     OffsetDateTime now = OffsetDateTime.now();
     TapRecord tapRecord = new TapRecord();
     tapRecord.setId(1);
@@ -46,6 +46,6 @@ class TapRecordTest {
     String expectedString =
         String.format(TAP_RECORD, 1, now, "ON", "Stop1", "Company1", "Bus37", "5500005555555559");
 
-    Assertions.assertThat(tapRecord.toString()).isEqualTo(expectedString);
+    Assertions.assertThat(tapRecord).hasToString(expectedString);
   }
 }

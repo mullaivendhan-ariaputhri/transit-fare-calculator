@@ -12,7 +12,7 @@ import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 @TestPropertySource(locations = "classpath:application.yml")
-public class FareConfigTest {
+class FareConfigTest {
 
   @Autowired private FareConfig fareConfig;
 
@@ -46,19 +46,19 @@ public class FareConfigTest {
   }
 
   @Test
-  public void testFareMappings() {
+  void testFareMappings() {
     validateFareMappings(mockFareConfig);
   }
 
   @Test
-  public void testFareMappingsFromConfig() {
+  void testFareMappingsFromConfig() {
     validateFareMappings(fareConfig);
   }
 
   // Validates fare mapping details
-  public void validateFareMappings(FareConfig fareConfig) {
+  void validateFareMappings(FareConfig fareConfig) {
     assertThat(mockFareConfig.getMapping()).isNotNull();
-    assertThat(mockFareConfig.getMapping().size()).isEqualTo(3);
+    assertThat(mockFareConfig.getMapping()).hasSize(3);
     FareConfig.FareMapping mapping1 = fareConfig.getMapping().get(0);
     assertThat(mapping1.getFrom()).isEqualTo("Stop1");
     assertThat(mapping1.getTo()).isEqualTo("Stop2");

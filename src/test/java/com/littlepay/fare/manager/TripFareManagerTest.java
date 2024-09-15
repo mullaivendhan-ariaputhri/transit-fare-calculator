@@ -86,7 +86,7 @@ class TripFareManagerTest {
   }
 
   @Test
-  public void testGetMaxFare() {
+  void testGetMaxFare() {
     // Test maximum fare for a given start stop
     Assertions.assertThat(tripFareManager.getMaxFare("Stop1")).isEqualTo(7.30);
     Assertions.assertThat(tripFareManager.getMaxFare("Stop2")).isEqualTo(5.50);

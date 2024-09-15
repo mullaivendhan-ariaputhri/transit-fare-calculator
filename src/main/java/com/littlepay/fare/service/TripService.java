@@ -5,6 +5,7 @@ import static com.littlepay.fare.constants.Constants.*;
 import com.littlepay.fare.config.AppConfig;
 import com.littlepay.fare.dto.TapRecord;
 import com.littlepay.fare.dto.TripRecord;
+import com.littlepay.fare.exception.FareCalculatorException;
 import com.littlepay.fare.manager.TripFareManager;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -155,7 +156,7 @@ public class TripService {
   }
 
   /** Read taps csv and create a list of Tap Records */
-  public boolean writeTrips(List<TripRecord> trips) {
+  public boolean writeTrips(List<TripRecord> trips) throws FareCalculatorException {
     boolean success = false;
     log.debug("Writing Trip records post processing. # of trips - {}", trips.size());
     final DateTimeFormatter dateFormat =
@@ -190,6 +191,7 @@ public class TripService {
           "Exception occurred in writing CSV file - {} with message - {}",
           appConfig.getTripsFilePath(),
           e.getMessage());
+      throw new FareCalculatorException("Exception when writing Trips file", e);
     } finally {
       log.info(
           "Trips added to file - {}. # of Trips - {}", appConfig.getTripsFilePath(), trips.size());
@@ -203,8 +205,11 @@ public class TripService {
           log.error("Error occurred while checking file size: {}", e.getMessage());
         }
       } else {
-        log.error("File not created or does not exist: {}", appConfig.getTripsFilePath());
+        log.error("Trips File not created: {}", appConfig.getTripsFilePath());
       }
+    }
+    if (!success) {
+      throw new FareCalculatorException("Trips File not created");
     }
     return success;
   }
