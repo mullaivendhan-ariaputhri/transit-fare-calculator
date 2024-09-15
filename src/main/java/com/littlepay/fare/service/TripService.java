@@ -1,7 +1,6 @@
 package com.littlepay.fare.service;
 
 import static com.littlepay.fare.constants.Constants.*;
-import static java.util.Objects.isNull;
 
 import com.littlepay.fare.config.AppConfig;
 import com.littlepay.fare.dto.TapRecord;
@@ -72,59 +71,87 @@ public class TripService {
         tapOnStack.push(tapRecord);
       } else if (TAP_OFF.equals(tapRecord.getTapType())) {
         if (!tapOnStack.isEmpty()) {
+          // TapOn and TapOff present (Completed or Cancelled)
           TapRecord tapOn = tapOnStack.pop();
-          TripRecord trip = createTripRecord(tapOn, tapRecord);
+          TripRecord trip = new TripRecord();
+          setupCompletedOrCancelledTrip(trip, tapOn, tapRecord);
           trips.add(trip);
         } else {
           // Assumption : Impossible unless an error in system/missing record
+          // TapOff present, TapOn absent (Invalid)
+          TripRecord trip = new TripRecord();
+          setupInvalidTrip(trip, tapRecord);
+          trips.add(trip);
           log.error(
               "Tap Off record found without a Tap On, Invalid/Missing Record = {}", tapRecord);
         }
       }
     }
 
-    // Incomplete Trips - Orphan TAP ON
+    // TapOn present, TapOff absent (Incomplete)
     while (!tapOnStack.isEmpty()) {
-      trips.add(createTripRecord(tapOnStack.pop(), null));
+      TripRecord trip = new TripRecord();
+      setupIncompleteTrip(trip, tapOnStack.pop());
+      trips.add(trip);
     }
 
     return trips.stream();
   }
 
   /**
-   * Util method that creates Trip details based on Taps (On and Off)
+   * Create Trips from Taps - Completed or Cancelled Trip
    *
+   * @param trip
    * @param tapOn
    * @param tapOff
-   * @return
    */
-  private TripRecord createTripRecord(TapRecord tapOn, TapRecord tapOff) {
-    TripRecord trip = new TripRecord();
+  private void setupCompletedOrCancelledTrip(TripRecord trip, TapRecord tapOn, TapRecord tapOff) {
     trip.setStarted(tapOn.getDateTimeUTC());
+    trip.setFinished(tapOff.getDateTimeUTC());
+    trip.setDurationSecs(
+        (int) (tapOff.getDateTimeUTC().toEpochSecond() - tapOn.getDateTimeUTC().toEpochSecond()));
     trip.setFromStopId(tapOn.getStopId());
+    trip.setToStopId(tapOff.getStopId());
+    trip.setChargeAmount(tripFareManager.getFare(tapOn.getStopId(), tapOff.getStopId()));
     trip.setCompanyId(tapOn.getCompanyId());
     trip.setBusID(tapOn.getBusId());
     trip.setPan(tapOn.getPan());
-
-    if (!isNull(tapOff)) { // Completed Or Cancelled Trips
-      trip.setFinished(tapOff.getDateTimeUTC());
-      trip.setDurationSecs(
-          (int) (tapOff.getDateTimeUTC().toEpochSecond() - tapOn.getDateTimeUTC().toEpochSecond()));
-      trip.setToStopId(tapOff.getStopId());
-      trip.setChargeAmount(tripFareManager.getFare(tapOn.getStopId(), tapOff.getStopId()));
-      if (tapOn.getStopId().equalsIgnoreCase(tapOff.getStopId())) {
-        trip.setStatus(CANCELLED);
-      } else {
-        trip.setStatus(COMPLETED);
-      }
-    } else { // Incomplete Trips
-      trip.setFinished(null);
-      trip.setDurationSecs(null);
-      trip.setToStopId(null);
-      trip.setChargeAmount(tripFareManager.getMaxFare(tapOn.getStopId()));
-      trip.setStatus(INCOMPLETE);
+    if (tapOn.getStopId().equalsIgnoreCase(tapOff.getStopId())) {
+      trip.setStatus(CANCELLED);
+    } else {
+      trip.setStatus(COMPLETED);
     }
-    return trip;
+  }
+
+  /**
+   * Create Trips from Taps - Incomplete Trip
+   *
+   * @param trip
+   * @param tapOn
+   */
+  private void setupIncompleteTrip(TripRecord trip, TapRecord tapOn) {
+    trip.setStarted(tapOn.getDateTimeUTC());
+    trip.setFromStopId(tapOn.getStopId());
+    trip.setChargeAmount(tripFareManager.getMaxFare(tapOn.getStopId()));
+    trip.setCompanyId(tapOn.getCompanyId());
+    trip.setBusID(tapOn.getBusId());
+    trip.setPan(tapOn.getPan());
+    trip.setStatus(INCOMPLETE);
+  }
+
+  /**
+   * Create Trips from Taps - Invalid Trip
+   *
+   * @param trip
+   * @param tapOff
+   */
+  private void setupInvalidTrip(TripRecord trip, TapRecord tapOff) {
+    trip.setFinished(tapOff.getDateTimeUTC());
+    trip.setToStopId(tapOff.getStopId());
+    trip.setCompanyId(tapOff.getCompanyId());
+    trip.setBusID(tapOff.getBusId());
+    trip.setPan(tapOff.getPan());
+    trip.setStatus(INVALID);
   }
 
   /** Read taps csv and create a list of Tap Records */
@@ -149,7 +176,9 @@ public class TripService {
                 .orElse(NOT_AVAILABLE),
             Optional.ofNullable(trip.getFromStopId()).orElse(NOT_AVAILABLE),
             Optional.ofNullable(trip.getToStopId()).orElse(NOT_AVAILABLE),
-            String.format(CHARGE_AMOUNT, trip.getChargeAmount()),
+            Optional.ofNullable(trip.getChargeAmount())
+                .map(amount -> String.format(CHARGE_AMOUNT, amount))
+                .orElse(NOT_AVAILABLE),
             Optional.ofNullable(trip.getCompanyId()).orElse(NOT_AVAILABLE),
             Optional.ofNullable(trip.getBusID()).orElse(NOT_AVAILABLE),
             Optional.ofNullable(trip.getPan()).orElse(NOT_AVAILABLE),

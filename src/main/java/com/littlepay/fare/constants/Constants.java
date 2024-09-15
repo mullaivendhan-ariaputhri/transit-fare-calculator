@@ -28,6 +28,7 @@ public class Constants {
   public static final String COMPLETED = "COMPLETED";
   public static final String INCOMPLETE = "INCOMPLETE";
   public static final String CANCELLED = "CANCELLED";
+  public static final String INVALID = "INVALID";
 
   private Constants() {
     // Private constructor to prevent instantiation
