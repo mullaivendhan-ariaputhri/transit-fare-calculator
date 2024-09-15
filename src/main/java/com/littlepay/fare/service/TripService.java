@@ -192,29 +192,24 @@ public class TripService {
             Optional.ofNullable(trip.getStatus()).orElse(NOT_AVAILABLE));
       }
       csvPrinter.flush();
+      log.info("#{} Trips added to file - {}", appConfig.getTripsFilePath(), trips.size());
+
+      // Check if the file was written successfully
+      if (Files.exists(filePath)) {
+        long fileSize = Files.size(filePath);
+        log.info("File successfully created. File size: {} bytes", fileSize);
+        success = fileSize > 0;
+      }
     } catch (IOException e) {
       log.error(
           "Exception occurred in writing CSV file - {} with message - {}",
           appConfig.getTripsFilePath(),
           e.getMessage());
       throw new FareCalculatorException("Exception when writing Trips file", e);
-    } finally {
-      log.info(
-          "Trips added to file - {}. # of Trips - {}", appConfig.getTripsFilePath(), trips.size());
-      // Check if the file was written successfully
-      if (Files.exists(filePath)) {
-        try {
-          long fileSize = Files.size(filePath);
-          log.info("File successfully created. File size: {} bytes", fileSize);
-          success = fileSize > 0;
-        } catch (IOException e) {
-          log.error("Error occurred while checking file size: {}", e.getMessage());
-        }
-      } else {
-        log.error("Trips File not created: {}", appConfig.getTripsFilePath());
-      }
     }
+
     if (!success) {
+      log.error("Trips File not created: {}", appConfig.getTripsFilePath());
       throw new FareCalculatorException("Trips File not created");
     }
     return success;
